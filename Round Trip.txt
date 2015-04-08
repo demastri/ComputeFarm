@@ -1,0 +1,49 @@
+1   - o -	Client Connects to Farm
+1.1 - o -		Farm Proxy sets up internal structures, opens a command queue connection to a farm server instance
+					possibilities - yes/no rMQ service connection
+1.2 - o -		Farm Proxy sends an init message to the farm
+1.3 - o -		Farm Proxy replies to client after a reasonable wait whether it was ack'd
+					possibilities - no rMQ Service, no farm instance found, found but refused, found and accepted
+
+2   - o -	Client asks farm to connect to Fabric
+2.1 - o -		Client provides worker typeID, update and completion handlers
+2.2 - o -		Proxy asks the farm for handles to an appropriate exchange and queues
+2.3 - o -		The farm establishes them as needed, and returns the appropriate detail to the proxy
+2.4 - o -		Proxy replies to client with a handle
+2.5 - o -		The farm also establishes worker processes as needed
+3   - o -	Client asks fabric to execute work
+3.1 - o -		Proxy posts a request to the fabric request queue for execution
+3.2 - o -		Proxy posts an audit note to the farm
+3.3 - o -		Farm notes the request, time and typeID
+3.4 - o -		Worker processes are monitoring the fabric request queue, one will get the message
+3.5 - o -		Worker process will post a start audit message to farm
+3.6 - o -		Worker process can regularly post updates to the fabric update queue
+3.7 - o -		On completion, worker process will post results to the fabric results queue
+3.8 - o -		Worker acks the message to the queue
+3.9 - o -		Worker process will post a complete audit message to farm
+3.10- o -		Farm notes number of requests serviced and average time to completion
+4   - o -	Client listens for update and completion returns
+4.1 - o -		the Farm proxy will listen on the fabric update queues for bound workers
+4.2 - o -		On an appropriate update message, the proxy will read the message and pass to client
+4.3 - o -		the client will parse and handle the update
+4.4 - o -		the proxy will listen on the fabric results queue
+4.5 - o -		On an appropriate results message, the proxy will read the message and pass to client
+4.6 - o -		the client will parse and handle the results
+5   - o -	Client disconnects from fabric
+5.1 - o -		Proxy sends a release fabric connection message to the farm
+5.2 - o -		Proxy replies to client after a reasonable wait whether it was ack'd
+5.3 - o -		Proxy releases any fabric resources held by the client
+5.4 - o -		Farm releases any fabric resources held by the client
+5.5 - o -		After a given timeout period, the farm releases any worker processes and queues held open
+6   - o -	Client disconnects from farm
+6.1 - o -		Proxy sends a release fabric connection message to the farm for all held connections
+6.2 - o -		Proxy sends an close farm connection message to the farm
+6.3 - o -		Proxy replies to client after a reasonable wait whether it was ack'd
+6.4 - o -		Proxy releases any farm resources held by the client
+6.5 - o -		Farm releases any farm resources held by the client
+6.6 - o -		After a given timeout period, the farm releases any worker processes and queues held open
+7   - o -	Client requests farm status
+7.1 - o -		Proxy requests status from farm
+7.2 - o -		Farm returns status structure
+7.3 - o -		Proxy reads status structure and passes to client
+7.4 - o -		the client will parse and handle the results
