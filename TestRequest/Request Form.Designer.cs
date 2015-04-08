@@ -37,11 +37,12 @@
             this.ConnectFabricButton = new System.Windows.Forms.Button();
             this.sortedResultList2 = new System.Windows.Forms.TextBox();
             this.statusList = new System.Windows.Forms.TextBox();
+            this.InitFarmButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // RequestFarmButton
             // 
-            this.RequestFarmButton.Location = new System.Drawing.Point(248, 12);
+            this.RequestFarmButton.Location = new System.Drawing.Point(248, 41);
             this.RequestFarmButton.Name = "RequestFarmButton";
             this.RequestFarmButton.Size = new System.Drawing.Size(105, 23);
             this.RequestFarmButton.TabIndex = 0;
@@ -61,7 +62,7 @@
             // 
             // DoWorkButton
             // 
-            this.DoWorkButton.Location = new System.Drawing.Point(248, 70);
+            this.DoWorkButton.Location = new System.Drawing.Point(248, 99);
             this.DoWorkButton.Name = "DoWorkButton";
             this.DoWorkButton.Size = new System.Drawing.Size(105, 23);
             this.DoWorkButton.TabIndex = 2;
@@ -79,7 +80,7 @@
             // 
             // DisconnectButton
             // 
-            this.DisconnectButton.Location = new System.Drawing.Point(248, 99);
+            this.DisconnectButton.Location = new System.Drawing.Point(248, 128);
             this.DisconnectButton.Name = "DisconnectButton";
             this.DisconnectButton.Size = new System.Drawing.Size(105, 23);
             this.DisconnectButton.TabIndex = 4;
@@ -89,7 +90,7 @@
             // 
             // DisconnectFarmButton
             // 
-            this.DisconnectFarmButton.Location = new System.Drawing.Point(248, 128);
+            this.DisconnectFarmButton.Location = new System.Drawing.Point(248, 157);
             this.DisconnectFarmButton.Name = "DisconnectFarmButton";
             this.DisconnectFarmButton.Size = new System.Drawing.Size(105, 23);
             this.DisconnectFarmButton.TabIndex = 5;
@@ -99,7 +100,7 @@
             // 
             // ConnectFabricButton
             // 
-            this.ConnectFabricButton.Location = new System.Drawing.Point(248, 41);
+            this.ConnectFabricButton.Location = new System.Drawing.Point(248, 70);
             this.ConnectFabricButton.Name = "ConnectFabricButton";
             this.ConnectFabricButton.Size = new System.Drawing.Size(105, 23);
             this.ConnectFabricButton.TabIndex = 6;
@@ -123,11 +124,22 @@
             this.statusList.Size = new System.Drawing.Size(229, 139);
             this.statusList.TabIndex = 8;
             // 
+            // InitFarmButton
+            // 
+            this.InitFarmButton.Location = new System.Drawing.Point(248, 12);
+            this.InitFarmButton.Name = "InitFarmButton";
+            this.InitFarmButton.Size = new System.Drawing.Size(105, 23);
+            this.InitFarmButton.TabIndex = 9;
+            this.InitFarmButton.Text = "Init Farm";
+            this.InitFarmButton.UseVisualStyleBackColor = true;
+            this.InitFarmButton.Click += new System.EventHandler(this.InitFarmButton_Click);
+            // 
             // RequestForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(365, 453);
+            this.Controls.Add(this.InitFarmButton);
             this.Controls.Add(this.statusList);
             this.Controls.Add(this.sortedResultList2);
             this.Controls.Add(this.ConnectFabricButton);
@@ -155,6 +167,7 @@
         private System.Windows.Forms.Button ConnectFabricButton;
         private System.Windows.Forms.TextBox sortedResultList2;
         private System.Windows.Forms.TextBox statusList;
+        private System.Windows.Forms.Button InitFarmButton;
     }
 }
 

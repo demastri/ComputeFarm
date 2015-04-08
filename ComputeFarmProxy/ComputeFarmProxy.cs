@@ -66,7 +66,7 @@ namespace ComputeFarmProxy
         string thisClientID;
         ComputeFarmStatus currentConfig;
 
-        string ControlBaseName = "__ControlBase__";
+        string ControlBaseName = "__ControlBaseProxy__";
 
         Exchange baseExchange;
         Queue controlQueue;
@@ -217,6 +217,9 @@ namespace ComputeFarmProxy
         }
         void WorkerCallback(byte[] msg, string routeKey)
         {
+            // if we want to have a single queue for replies from workers, then this is the right place to split
+            // if we open a separate queue, then each can have an explicit handler and we need no logic...
+            // remember, we post to an EXCHANGE.  we only really need queues for things we listen to...
             string gotOne = System.Text.Encoding.Default.GetString(msg);
             if (routeKey.Split('.')[2] == "workUpdate")
                 RequestUpdateEvent(gotOne);

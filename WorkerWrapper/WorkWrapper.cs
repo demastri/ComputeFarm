@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 using ComputeFarmProxy;
 using ComputeFarmWorkerProxy;
-using QueueCommon;
 
 namespace WorkerWrapper
 {

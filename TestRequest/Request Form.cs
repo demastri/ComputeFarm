@@ -8,12 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using ComputeFarm;
 using ComputeFarmProxy;
 
 namespace TestRequest
 {
     public partial class RequestForm : Form
     {
+        ComputeFarm.ComputeFarm actFarm;
 
         ComputeFarmProxy.ComputeFarmProxy myFarm;
         ComputeFarmProxy.ComputeFarmProxy.WorkerHandle printSortWorker;
@@ -127,6 +129,12 @@ namespace TestRequest
             // clear this status line and write the returned detail
             int i = sortedResultList2.Text.LastIndexOf(Environment.NewLine);
             sortedResultList2.Text = sortedResultList2.Text.Substring(0, i + 1) + result + Environment.NewLine;
+        }
+
+        private void InitFarmButton_Click(object sender, EventArgs e)
+        {
+            actFarm = new ComputeFarm.ComputeFarm(null);
+            actFarm.Init();
         }
     }
 }

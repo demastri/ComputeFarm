@@ -65,17 +65,20 @@ namespace ComputeFarm
             // ### set up the local control queues
             List<string> routes = new List<string>();
             routes.Add("*.farmRequest.proxy");
+            // the queueingmodel class binds an exchange and queue for straightforward applications where only one channel is needed
             controlQueue = new QueueingModel("ComputeFarm", "topic", ControlBaseName, routes, "localhost", "guest", "guest", 5672);
             controlQueue.SetListenerCallback(HandlePosts);
-            auditLog.WriteEntry("Queue Initialized");
+            if (auditLog != null)
+                auditLog.WriteEntry("Queue Initialized");
         }
 
         private void HandlePosts(byte[] msg, string routeKey)
         {
             string msgStr = System.Text.Encoding.Default.GetString(msg);
-            auditLog.WriteEntry("Message Received: " + msgStr + " - " + routeKey);
+            if (auditLog != null)
+                auditLog.WriteEntry("Message Received: " + msgStr + " - " + routeKey);
             string clientID = routeKey.Split('.')[0];
-            controlQueue.PostMessage("Ack", clientID+".farmResponse.farm");
+            controlQueue.PostMessage("Ack", clientID + ".farmResponse.farm");
         }
 
         private void CleanupWorkers(List<ComputeWorker> list)
