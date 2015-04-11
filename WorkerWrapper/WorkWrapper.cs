@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using QueueCommon;
 using ComputeFarmProxy;
 using ComputeFarmWorkerProxy;
 
@@ -17,11 +18,11 @@ namespace WorkerWrapper
         static WorkerStatus myStatus = WorkerStatus.Init;
 
         // this really has to be turned into an ExchDetail object...
-        static FabricManager thisExch = null;
+        static QueueingModel thisExch = null;
 
         static int sleepIncrement = 50;
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             // the job of this process is to:
             //  instantiate a worker
@@ -36,13 +37,13 @@ namespace WorkerWrapper
             if (testing)
             {
                 TestMe();
-                return;
+                return 0;
             }
 
             Init(args[0].Split('|'));
 
             if (myWorker == null || thisExch == null || !thisExch.IsOpen)
-                return;
+                return 0;
 
             myStatus = WorkerStatus.Running;
             contextTimer.Enabled = true;
@@ -51,6 +52,7 @@ namespace WorkerWrapper
             {
                 System.Threading.Thread.Sleep(sleepIncrement);
             }
+            return 1;
         }
 
         static private void Init(string[] paramList)
@@ -90,7 +92,7 @@ namespace WorkerWrapper
         }
         static void ShutdownQueues()
         {
-            thisExch.Close();
+            thisExch.CloseConnections();
             thisExch = null;
         }
 
@@ -155,24 +157,34 @@ namespace WorkerWrapper
                 myWorker.Init();
                 myWorker.WorkerUpdateEvent += WorkerUpdateAvailable;
                 myWorker.WorkerCompleteEvent += WorkerResultsAvailable;
+
+                // ### SendAckToControlQueue();
             }
         }
         static void InstantiateExchAndQueues(string[] paramList)
         {
             // by convention, the args are a stringified set of parameters, in this order:
-            // host, exch, uid, pwd, queuebasename, routekey, port, typeID
+            // typeID, host, exch, uid, pwd, port, typeID
+
+            /// worker listens to the "magic" queue and routing established on startup
+            /// worker posts to *.workUpdate/workComplete/workerCommand.{myWorker} messages
+            /// worker listens to *.workRequest/workerCommand.{myWorker} messages
 
             // build the queues
+            string typeID = paramList[(int)StringifiedParameters.TypeIDOffset];
             string thisHost = paramList[(int)StringifiedParameters.HostOffset];
             string thisExchName = paramList[(int)StringifiedParameters.ExchOffset];
             string thisUid = paramList[(int)StringifiedParameters.UidOffset];
             string thisPwd = paramList[(int)StringifiedParameters.PwdOffset];
-            string thisBaseName = paramList[(int)StringifiedParameters.QueueBaseNameOffset];
-            string thisRouting = paramList[(int)StringifiedParameters.RouteKeyOffset];
+
             int thisPort = Convert.ToInt32(paramList[(int)StringifiedParameters.PortOffset]);
 
+            List<string> routes = new List<string>();
+            routes.Add("*.workRequest." + typeID);
+            routes.Add("*.workerCommand." + typeID);
+            string queueName = "worker." + typeID;
 
-            thisExch = new FabricManager(thisPort, thisHost, thisExchName, thisUid, thisPwd);
+            thisExch = new QueueingModel(thisExchName, "topic", queueName, routes, thisHost, thisUid, thisPwd, thisPort);
         }
         static bool RequestIsAvailable()
         {

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using QueueCommon;
+using ComputeFarm;
 
 namespace ComputeFarmProxy
 {
@@ -81,19 +82,7 @@ namespace ComputeFarmProxy
         event RequestUpdateHandler RequestUpdateEvent;
         event RequestCompleteHandler RequestCompleteEvent;
 
-        public class WorkerHandle
-        {
-            Queue refQueue;
-            string refTypeID;
-            public Queue worker { get { return refQueue; } }
-            public string typeID { get { return refTypeID; } }
-
-            public WorkerHandle(Queue thisQueue, string thisTypeID)
-            {
-                refQueue = thisQueue;
-                refTypeID = thisTypeID;
-            }
-        }
+        List<ComputeRequest> openRequests;
 
         static public ComputeFarmProxy ConnectToFarm(int thisPort, string thisHost, string refExch, string refuid, string refpwd)
         {
@@ -116,6 +105,7 @@ namespace ComputeFarmProxy
         }
         private void Init(int thisPort, string thisHost, string refExch, string refuid, string refpwd, string clientID)
         {
+            openRequests = new List<ComputeRequest>();
             workerQueues = new List<Queue>();
             thisClientID = clientID;
             port = thisPort;
@@ -133,19 +123,31 @@ namespace ComputeFarmProxy
         }
         internal void SetupControlQueue()
         {
-            controlQueue = new Queue(baseExchange, ControlBaseName, thisClientID + ".farmResponse.farm");
-
-            string paramString = BuildCommandString("Init", thisClientID);
-            controlQueue.PostMessage(paramString, thisClientID + ".farmRequest.proxy");
-            if (!WaitForAck())
-                controlQueue = null;
+            try
+            {
+                controlQueue = new Queue(baseExchange, ControlBaseName, thisClientID + ".farmResponse.farm");
+                controlQueue.SetListenerCallback(CommandCallback);
+                ComputeFarm.ComputeRequest req = new ComputeFarm.ComputeRequest("Init");
+                openRequests.Add(req);
+                controlQueue.PostMessage(req.commandString, thisClientID + ".farmRequest.proxy");
+                if (!WaitForAck(req))
+                    controlQueue = null;
+            }
+            catch (Exception e)
+            {
+            }
         }
 
-        internal string BuildCommandString(string cmd, string parameter)
+        internal string GenerateCommandID()
         {
-            return BuildCommandString(cmd, parameter, "", 0);
+            return Guid.NewGuid().ToString();
         }
-        internal string BuildCommandString(string cmd, string parameter, string typeID, int count)
+
+        internal string BuildCommandString(string cmd, string parameter, string commandID)
+        {
+            return BuildCommandString(cmd, parameter, commandID, "", 0);
+        }
+        internal string BuildCommandString(string cmd, string parameter, string commandID, string typeID, int count)
         {
             // command string is request for the farm to do something on our behalf:
             // typ create queues or establish workers listening to a particular queue to receive work requests
@@ -153,10 +155,10 @@ namespace ComputeFarmProxy
             switch (cmd)
             {
                 case "Init":
-                    outString = cmd + "|" + parameter;
+                    outString = cmd + "|" + commandID + "|" + parameter;
                     break;
                 case "WorkerRequest":
-                    outString = cmd + "|" + typeID + "|" + count;
+                    outString = cmd + "|" + commandID + "|" + typeID + "|" + count;
                     break;
             }
             return outString;
@@ -200,9 +202,11 @@ namespace ComputeFarmProxy
             // if there's an existing queue that meets this requirement, return that detail
             // if not, create and bind it, then return that detail
 
-            string cmd = BuildCommandString("WorkerRequest", thisClientID, typeID, count);
-            controlQueue.PostMessage(cmd, thisClientID + ".farmRequest.proxy");
-            if (WaitForAck())
+            ComputeFarm.ComputeRequest req = new ComputeFarm.ComputeRequest("WorkerRequest", typeID, count);
+            openRequests.Add(req);
+            controlQueue.PostMessage(req.commandString, thisClientID + ".farmRequest.proxy");
+
+            if (WaitForAck(req))
             {
                 SetupWorkerQueue(typeID);
                 Queue workerQueue = workerQueues[FindWorkerQueue(typeID)];
@@ -226,21 +230,33 @@ namespace ComputeFarmProxy
             if (routeKey.Split('.')[2] == "workComplete")
                 RequestCompleteEvent(gotOne);
         }
-
-        private bool WaitForAck()
+        void CommandCallback(byte[] msg, string routeKey)
         {
-            string replyStr = "";
-            for (int i = 0; replyStr == "" && i < commandTimeout; i += sleepIncrement)
-            {
-                if (controlQueue.IsEmpty)
-                    System.Threading.Thread.Sleep(sleepIncrement);
-                else
-                    replyStr = controlQueue.ReadMessageAsString();
-            }
+            string replyStr = System.Text.Encoding.Default.GetString(msg);
             string[] tokens = replyStr.Split('|');
-            if (replyStr.Trim() == "" || tokens.Count() == 0 || tokens[0] != "Ack")
-                return false;
-            return true;
+
+            string commandType = (tokens.Count() >= 1 ? tokens[0] : "");
+            string commandID = (tokens.Count() >= 2 ? tokens[1] : "");
+            if (commandID != "")
+                foreach (ComputeRequest cr in openRequests)
+                    if (cr.messageID == commandID)
+                    {
+                        cr.replyString = replyStr;
+                        cr.replyType = commandType;
+                    }
+        }
+
+        private bool WaitForAck(ComputeRequest req)
+        {
+            for (int i = 0; i < commandTimeout; i += sleepIncrement)
+            {
+                if (req.HasReply)
+                    break;
+                System.Threading.Thread.Sleep(sleepIncrement);
+            }
+            if (req.HasReply)
+                openRequests.Remove(req);
+            return req.IsAck;
         }
         public void RequestWork(WorkerHandle handle, string request)
         {

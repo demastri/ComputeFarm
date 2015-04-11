@@ -25,9 +25,7 @@ namespace ComputeFarm
     public class ComputeFarm
     {
         EventLog auditLog;
-        List<ComputeWorker> runningWorkers;
-        List<ComputeWorker> idleWorkers;
-        List<ComputeWorker> failedWorkers;
+        List<ComputeWorker> workers;
 
         string ControlBaseName = "__ControlBase__";
         QueueingModel controlQueue;
@@ -37,20 +35,17 @@ namespace ComputeFarm
 
         public ComputeFarm(EventLog audit)
         {
-            runningWorkers = new List<ComputeWorker>();
-            idleWorkers = new List<ComputeWorker>();
-            failedWorkers = new List<ComputeWorker>();
+            workers = new List<ComputeWorker>();
             auditLog = audit;
         }
+        public bool IsOpen { get { return controlQueue != null && controlQueue.IsOpen; } }
         public void Init()
         {
             InitControlQueue();
         }
         public void Shutdown()
         {
-            CleanupWorkers(idleWorkers);
-            CleanupWorkers(failedWorkers);
-            CleanupWorkers(runningWorkers);
+            CleanupWorkers(workers);
         }
         public void CheckControlRequests()
         {
@@ -62,7 +57,7 @@ namespace ComputeFarm
 
         private void InitControlQueue()
         {
-            // ### set up the local control queues
+            // set up the local control queues
             List<string> routes = new List<string>();
             routes.Add("*.farmRequest.proxy");
             // the queueingmodel class binds an exchange and queue for straightforward applications where only one channel is needed
@@ -77,8 +72,43 @@ namespace ComputeFarm
             string msgStr = System.Text.Encoding.Default.GetString(msg);
             if (auditLog != null)
                 auditLog.WriteEntry("Message Received: " + msgStr + " - " + routeKey);
-            string clientID = routeKey.Split('.')[0];
-            controlQueue.PostMessage("Ack", clientID + ".farmResponse.farm");
+
+            string[] msgSet = msgStr.Split('|');
+            string[] paramSet = routeKey.Split('.');
+            string clientID = paramSet[0];
+            string reply = ProcessCommand(msgSet, paramSet);
+            controlQueue.PostMessage(reply, clientID + ".farmResponse.farm");
+        }
+        string ProcessCommand(string[] msgSet, string[] paramSet)
+        {
+            string clientID = (paramSet.Count() >= 1 ? paramSet[0] : "");
+
+            string commandType = (msgSet.Count() >= 1 ? msgSet[0] : "");
+            string commandID = (msgSet.Count() >= 2 ? msgSet[1] : "");
+            string typeID = (msgSet.Count() >= 3 ? msgSet[2] : "");
+            int count = Convert.ToInt32(msgSet.Count() >= 4 ? msgSet[3] : "0");
+            string outString = "Nack|" + commandID;
+            switch (commandType)
+            {
+                case "Init":
+                    outString = "Ack|" + commandID;
+                    break;
+                case "WorkerRequest":
+                    if (typeID != "" && count > 0 && CreateWorkers(typeID, count) )
+                        outString = "Ack|" + commandID;
+                    break;
+            }
+            return outString;
+        }
+        private bool CreateWorkers(string typeID, int count) {
+            for (int i = 0; i < count; i++)
+            {
+                ComputeWorker thisWorker = ComputeWorker.WorkerFactory(typeID);
+                if (thisWorker == null)
+                    return false;
+                workers.Add(thisWorker);
+            }
+            return true;
         }
 
         private void CleanupWorkers(List<ComputeWorker> list)

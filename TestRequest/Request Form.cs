@@ -18,10 +18,11 @@ namespace TestRequest
         ComputeFarm.ComputeFarm actFarm;
 
         ComputeFarmProxy.ComputeFarmProxy myFarm;
-        ComputeFarmProxy.ComputeFarmProxy.WorkerHandle printSortWorker;
-        ComputeFarmProxy.ComputeFarmProxy.WorkerHandle randomTaskWorker;
+        WorkerHandle printSortWorker;
+        WorkerHandle randomTaskWorker;
         string thisClientID;
         List<string> openRequests;
+        List<string> openReplies;
 
         public RequestForm()
         {
@@ -29,6 +30,7 @@ namespace TestRequest
             myFarm = null;
             thisClientID = "";
             openRequests = new List<string>();
+            openReplies = new List<string>();
         }
 
         private void GetFarmStatusButton_Click(object sender, EventArgs e)
@@ -69,10 +71,18 @@ namespace TestRequest
 
         private void ConnectFabricButton_Click(object sender, EventArgs e)
         {
-            // ### connect to fabric
+            // connect to fabric
             printSortWorker = myFarm.ConnectWorkerFabric("TestWorker.PrintSort", 4, UpdateTask1Handler, ResultTask1Handler);
             randomTaskWorker = myFarm.ConnectWorkerFabric("TestWorker.RandomTask", 4, UpdateTask2Handler, ResultTask2Handler);
 
+            if (printSortWorker != null && randomTaskWorker != null )
+                MessageBox.Show("Fabric Connected OK");
+            else
+            {
+                MessageBox.Show("Could not connect to fabric");
+                thisClientID = "";
+                printSortWorker = randomTaskWorker = null;
+            }
             GetFarmStatusButton_Click(sender, e);
         }
 
@@ -133,8 +143,22 @@ namespace TestRequest
 
         private void InitFarmButton_Click(object sender, EventArgs e)
         {
-            actFarm = new ComputeFarm.ComputeFarm(null);
-            actFarm.Init();
+            try
+            {
+                actFarm = new ComputeFarm.ComputeFarm(null);
+                actFarm.Init();
+            }
+            catch (Exception exc)
+            {
+            }
+            if (actFarm != null && actFarm.IsOpen)
+                MessageBox.Show("Local Farm Instance Is OK");
+            else
+            {
+                MessageBox.Show("Could not create local farm");
+                thisClientID = "";
+                actFarm = null;
+            }
         }
     }
 }

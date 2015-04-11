@@ -82,6 +82,10 @@
       <Project>{cdb851d8-951e-41f4-ba52-ff09863bef1d}</Project>
       <Name>ComputeFarmProxy</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ComputeFarm\ComputeFarm.csproj">
+      <Project>{d7ac9b5c-6483-4c88-a15f-b473909a7429}</Project>
+      <Name>ComputeFarm</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

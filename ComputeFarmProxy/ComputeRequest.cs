@@ -31,5 +31,6 @@ namespace ComputeFarm
             replyType = "";
             commandString = reqType + "|" + messageID + "|" + strParameter + "|" + intParameter.ToString();
         }
+
     }
 }

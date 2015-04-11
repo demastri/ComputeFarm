@@ -1,16 +1,18 @@
-1   - o -	Client Connects to Farm
-1.1 - o -		Farm Proxy sets up internal structures, opens a command queue connection to a farm server instance
+1   - x -	Client Connects to Farm
+1.1 - x -		Farm Proxy sets up internal structures, opens a command queue connection to a farm server instance
 					possibilities - yes/no rMQ service connection
-1.2 - o -		Farm Proxy sends an init message to the farm
-1.3 - o -		Farm Proxy replies to client after a reasonable wait whether it was ack'd
+1.2 - x -		Farm Proxy sends an init message to the farm
+1.3 - x -		Farm Proxy replies to client after a reasonable wait whether it was ack'd
 					possibilities - no rMQ Service, no farm instance found, found but refused, found and accepted
 
 2   - o -	Client asks farm to connect to Fabric
-2.1 - o -		Client provides worker typeID, update and completion handlers
-2.2 - o -		Proxy asks the farm for handles to an appropriate exchange and queues
-2.3 - o -		The farm establishes them as needed, and returns the appropriate detail to the proxy
-2.4 - o -		Proxy replies to client with a handle
-2.5 - o -		The farm also establishes worker processes as needed
+2.1 - x -		Client provides worker typeID, update and completion handlers
+2.2 - o -		Client provides worker typeID, worker location hint? update and completion handlers
+2.3 - x -		Proxy asks the farm for handles to an appropriate queues (uses current exchange)
+2.4 - o -		The farm establishes them as needed, and returns the appropriate detail to the proxy
+2.5 - o -		Proxy replies to client with a handle
+2.6 - o -		The farm also establishes worker processes as needed
+
 3   - o -	Client asks fabric to execute work
 3.1 - o -		Proxy posts a request to the fabric request queue for execution
 3.2 - o -		Proxy posts an audit note to the farm
