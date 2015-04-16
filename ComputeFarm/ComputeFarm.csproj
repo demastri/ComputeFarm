@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ProcessWrappers">
+      <HintPath>..\..\Chess\PipesCommsExamples\ProcessWrappers\bin\Debug\ProcessWrappers.dll</HintPath>
+    </Reference>
     <Reference Include="QueueCommon, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\QueueMgt\QueueCommon\bin\Debug\QueueCommon.dll</HintPath>
@@ -47,7 +50,13 @@
     <Compile Include="ComputeRequest.cs" />
     <Compile Include="ComputeResult.cs" />
     <Compile Include="ComputeWorker.cs" />
+    <Compile Include="FarmSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="FarmSettings.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

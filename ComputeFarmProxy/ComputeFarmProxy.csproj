@@ -45,7 +45,6 @@
   <ItemGroup>
     <Compile Include="ComputeFarmProxy.cs" />
     <Compile Include="ComputeFarmStatus.cs" />
-    <Compile Include="ComputeRequest.cs" />
     <Compile Include="FabricManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WorkerHandle.cs" />
@@ -54,6 +53,10 @@
     <ProjectReference Include="..\ComputeFarmWorkerProxy\ComputeFarmWorkerProxy.csproj">
       <Project>{258d6910-898a-47ad-8bc6-2a5af2599a2a}</Project>
       <Name>ComputeFarmWorkerProxy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ComputeFarm\ComputeFarm.csproj">
+      <Project>{d7ac9b5c-6483-4c88-a15f-b473909a7429}</Project>
+      <Name>ComputeFarm</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

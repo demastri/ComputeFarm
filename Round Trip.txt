@@ -24,6 +24,7 @@
 3.8 - o -		Worker acks the message to the queue
 3.9 - o -		Worker process will post a complete audit message to farm
 3.10- o -		Farm notes number of requests serviced and average time to completion
+
 4   - o -	Client listens for update and completion returns
 4.1 - o -		the Farm proxy will listen on the fabric update queues for bound workers
 4.2 - o -		On an appropriate update message, the proxy will read the message and pass to client
@@ -31,19 +32,22 @@
 4.4 - o -		the proxy will listen on the fabric results queue
 4.5 - o -		On an appropriate results message, the proxy will read the message and pass to client
 4.6 - o -		the client will parse and handle the results
+
 5   - o -	Client disconnects from fabric
 5.1 - o -		Proxy sends a release fabric connection message to the farm
 5.2 - o -		Proxy replies to client after a reasonable wait whether it was ack'd
-5.3 - o -		Proxy releases any fabric resources held by the client
+5.3 - x -		Proxy releases any fabric resources held by the client
 5.4 - o -		Farm releases any fabric resources held by the client
 5.5 - o -		After a given timeout period, the farm releases any worker processes and queues held open
+
 6   - o -	Client disconnects from farm
 6.1 - o -		Proxy sends a release fabric connection message to the farm for all held connections
 6.2 - o -		Proxy sends an close farm connection message to the farm
 6.3 - o -		Proxy replies to client after a reasonable wait whether it was ack'd
-6.4 - o -		Proxy releases any farm resources held by the client
+6.4 - x -		Proxy releases any farm resources held by the client
 6.5 - o -		Farm releases any farm resources held by the client
 6.6 - o -		After a given timeout period, the farm releases any worker processes and queues held open
+
 7   - o -	Client requests farm status
 7.1 - o -		Proxy requests status from farm
 7.2 - o -		Farm returns status structure

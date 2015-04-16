@@ -84,6 +84,10 @@ namespace ComputeFarmProxy
 
         List<ComputeRequest> openRequests;
 
+        static public ComputeFarmProxy ConnectToFarm(FarmSettings fs)
+        {
+            return ConnectToFarm(fs.Port, fs.Host, fs.Exch, fs.Uid, fs.Pwd);
+        }
         static public ComputeFarmProxy ConnectToFarm(int thisPort, string thisHost, string refExch, string refuid, string refpwd)
         {
             return ConnectToFarm(thisPort, thisHost, refExch, refuid, refpwd, Guid.NewGuid().ToString());
@@ -262,6 +266,12 @@ namespace ComputeFarmProxy
         {
             handle.worker.PostMessage(request, thisClientID+".workRequest."+handle.typeID);
         }
-
+        public void Shutdown()
+        {
+            foreach (Queue q in workerQueues)
+                q.Close();
+            controlQueue.Close();
+            baseExchange.Close();
+        }
     }
 }

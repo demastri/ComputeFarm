@@ -15,9 +15,11 @@ namespace TestRequest
 {
     public partial class RequestForm : Form
     {
+        FarmSettings fs = null;
+
         ComputeFarm.ComputeFarm actFarm;
 
-        ComputeFarmProxy.ComputeFarmProxy myFarm;
+        ComputeFarmProxy.ComputeFarmProxy myFarmProxy;
         WorkerHandle printSortWorker;
         WorkerHandle randomTaskWorker;
         string thisClientID;
@@ -27,7 +29,7 @@ namespace TestRequest
         public RequestForm()
         {
             InitializeComponent();
-            myFarm = null;
+            myFarmProxy = null;
             thisClientID = "";
             openRequests = new List<string>();
             openReplies = new List<string>();
@@ -39,7 +41,7 @@ namespace TestRequest
             // this should ask a running service for its currently established queues/workers
             // it should get an acknowledgement, and dialog up the results
 
-            ComputeFarmProxy.ComputeFarmStatus curStatus = myFarm.RequestStatus();
+            ComputeFarmProxy.ComputeFarmStatus curStatus = myFarmProxy.RequestStatus();
             statusList.Text = curStatus.ToString();
         }
 
@@ -52,15 +54,17 @@ namespace TestRequest
                 // this should ask a running service for 4 engines of TestWorker.Worker
                 // it should get an acknowledgement, and dialog up the results
 
-                thisClientID = Guid.NewGuid().ToString();
-                myFarm = ComputeFarmProxy.ComputeFarmProxy.ConnectToFarm(5672, "localhost", "ComputeFarm", "guest", "guest", thisClientID);
-                if (myFarm != null && myFarm.IsOpen)
+                if( fs == null )
+                    fs = FarmSettings.SettingsFactory("local");
+               fs.ClientID = thisClientID = Guid.NewGuid().ToString();
+                myFarmProxy = ComputeFarmProxy.ComputeFarmProxy.ConnectToFarm(fs);
+                if (myFarmProxy != null && myFarmProxy.IsOpen)
                     MessageBox.Show("Farm Connected OK");
                 else
                 {
                     MessageBox.Show("Could not connect to farm");
                     thisClientID = "";
-                    myFarm = null;
+                    myFarmProxy = null;
                 }
             }
             else
@@ -72,8 +76,8 @@ namespace TestRequest
         private void ConnectFabricButton_Click(object sender, EventArgs e)
         {
             // connect to fabric
-            printSortWorker = myFarm.ConnectWorkerFabric("TestWorker.PrintSort", 4, UpdateTask1Handler, ResultTask1Handler);
-            randomTaskWorker = myFarm.ConnectWorkerFabric("TestWorker.RandomTask", 4, UpdateTask2Handler, ResultTask2Handler);
+            printSortWorker = myFarmProxy.ConnectWorkerFabric("TestWorker.PrintSort", 4, UpdateTask1Handler, ResultTask1Handler);
+            randomTaskWorker = myFarmProxy.ConnectWorkerFabric("TestWorker.RandomTask", 4, UpdateTask2Handler, ResultTask2Handler);
 
             if (printSortWorker != null && randomTaskWorker != null )
                 MessageBox.Show("Fabric Connected OK");
@@ -88,11 +92,20 @@ namespace TestRequest
 
         private void DisconnectFabricButton_Click(object sender, EventArgs e)
         {
-            // ### disconnect fabric
+            // disconnect fabric
+            myFarmProxy.Shutdown();
+            myFarmProxy = null;
+            MessageBox.Show("Farm proxy closed");
         }
         private void DisconnectFarmButton_Click(object sender, EventArgs e)
         {
-            // ### disconnect farm
+            if (myFarmProxy != null)
+                DisconnectFabricButton_Click(sender, e);
+
+            // disconnect farm
+            actFarm.Shutdown();
+            actFarm = null;
+            MessageBox.Show("Farm instance closed");
         }
 
         List<string> workStrings = new List<string>() { "joe", "bill", "fred" };
@@ -110,7 +123,7 @@ namespace TestRequest
                 sortedResultList1.Text += s + Environment.NewLine;
                 string wr = GenerateWorkRequestString(s, openRequests.Count);
                 openRequests.Add(wr);
-                myFarm.RequestWork(printSortWorker, wr);
+                myFarmProxy.RequestWork(printSortWorker, wr);
             }
             sortedResultList1.Text += "=====================" + Environment.NewLine;
         }
@@ -143,9 +156,17 @@ namespace TestRequest
 
         private void InitFarmButton_Click(object sender, EventArgs e)
         {
+            if (actFarm != null)
+            {
+                MessageBox.Show("there is already an open farm instance ...");
+                return;
+            }
             try
             {
-                actFarm = new ComputeFarm.ComputeFarm(null);
+                if (fs == null)
+                    fs = FarmSettings.SettingsFactory()["local"];
+
+                actFarm = new ComputeFarm.ComputeFarm(fs, null);
                 actFarm.Init();
             }
             catch (Exception exc)
@@ -159,6 +180,14 @@ namespace TestRequest
                 thisClientID = "";
                 actFarm = null;
             }
+        }
+
+        private void RequestForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (myFarmProxy != null)
+                myFarmProxy.Shutdown();
+            if (actFarm != null)
+                actFarm.Shutdown();
         }
     }
 }

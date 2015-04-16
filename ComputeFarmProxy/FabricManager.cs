@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using QueueCommon;
 using ComputeFarmWorkerProxy;
 using ComputeFarmProxy;
+using ComputeFarm;
 
 namespace ComputeFarmProxy
 {
@@ -51,26 +52,23 @@ namespace ComputeFarmProxy
             return !(lhs == rhs);
         }
 
-        public FabricManager(int thisPort, string thisHost, string refExch, string refuid, string refpwd)
+        public FabricManager(FarmSettings fs)
         {
-            Init(thisPort, thisHost, refExch, refuid, refpwd);
-        }
-        public FabricManager(int thisPort, string thisHost)
-        {
-            Init(thisPort, thisHost, "refExchange", "guest", "guest");
+            Init(fs);
         }
         public FabricManager()
         {
-            Init(-1, "localhost", "refExchange", "guest", "guest");
+            Init(new FarmSettings() );
         }
-        private void Init(int thisPort, string thisHost, string refExch, string refuid, string refpwd)
+        private void Init(FarmSettings fs)
         {
-            port = thisPort;
-            host = thisHost;
+            port = fs.Port;
+            host = fs.Host;
+            exchange = fs.Exch;
+            uid = fs.Uid;
+            pwd = fs.Pwd;
+
             myWorkerID = -1;
-            exchange = refExch;
-            uid = refuid;
-            pwd = refpwd;
         }
         internal void SetupControlQueues()
         {

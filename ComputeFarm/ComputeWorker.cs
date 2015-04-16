@@ -5,10 +5,37 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 
+using ProcessWrappers;
+
 namespace ComputeFarm
 {
     public class ComputeWorker
     {
+        /// <summary>
+        /// 
+        /// this object encapsulates the external process running the IWorker for a given typeID
+        /// it needs to be instantiated and killed
+        /// work requests, process lifecycle, status and results can either be:
+        ///     passed through this wrapper to the farm, or
+        ///             NO - then we have to do queue / worker management rather than just consume when ready
+        ///     passed through queues for comms to the object / wrapper / client, or
+        ///             NO - seems cumbersome for the lifecycle stuff - i have a handle in the farm for these...
+        ///     hybrid - lifecycle here, work requests queued
+        ///             Yes On start:
+        ///                 On creation, farm provides location and typeID
+        ///                 cw creates a host process wrapper and passes this detail - it's a HostWrapper, not an IWorker...
+        ///                 cw starts the process
+        ///             On work request:
+        ///                 Nothing - process receives request, processes and returns result directly from client
+        ///                 Audit - proxy should send audit note to farm (req), worker should send audit note to farm (req/comp)
+        ///             On kill/stop:
+        ///                 farm asks cw to stop
+        ///                 cw asks the process to stop
+        ///                 kills process if needed
+        ///                 returns to farm
+        ///                 farm releases resources
+        ///                 
+        /// </summary>
         public int thisID;
 
         static string searchLoc = "./Workers"; // sdir of the executable??
@@ -17,7 +44,7 @@ namespace ComputeFarm
         string routeKey;
         public string requestType;
 
-        IWorker workerProcess;
+        HostWrapper workerProcess;
 
         public DateTime creationTme;
         public DateTime executionStartTime;
@@ -26,22 +53,33 @@ namespace ComputeFarm
         public TimeSpan currentRunTime;
         public TimeSpan executionTimeout;
 
-        public ComputeResult result { get { return workerProcess == null ? null : workerProcess.GetWorkResult(); } }
-        public WorkerStatus status { get { return workerProcess == null ? WorkerStatus.Init : (currentRunTime > executionTimeout ? WorkerStatus.Timeout : workerProcess.GetStatus()); } }
-        public void Kill() { if (workerProcess != null) workerProcess.Kill(); }
-        public void Shutdown() { if (workerProcess != null) workerProcess.Shutdown(); }
+        public WorkerStatus status { get { return /*###*/WorkerStatus.Running; } }
+        public void Kill() { if (workerProcess != null) /*###*/workerProcess = null; }
+        public void Shutdown() { if (workerProcess != null) /*###*/workerProcess = null; }
 
         public static ComputeWorker WorkerFactory(string typeID)
         {
             /// ### there may be many ways to manage this, but the first one out of the box is:
             ///     an IWorker component in a dll that we can wrap in a WorkWrapper...
+           
             /// I think it's easier from a workflow perspective to find the appropriate dlls for this typeid first
             /// then pass them to the workwrapper for instantiation, rather than start a process and hope it will 
             /// be able to find it.  You still have to get a positive ack that it's running, but if you don't you
             /// know it was an instantiation problem, not a location one...
+
+            /// so....
+            /// we actually have a specific ClientWrapper that knows how to talk to the queues
+            /// and manipulate a worker object, whose typeID and dll will be passed as parameters
+            /// the hostwrapper can be pretty ignorant of that...actually, the hostwrapper could be embedded in the 
+            /// actual farm calling client, if a same-machine solution was acceptable.  Having something else manage the 
+            /// clientwrappers (workers) allows it to be distributed...
+            
+            /// the real question will be, do I need a computeworker, or is it just a hostwrapper?
+
             Dictionary<string, string> workerLoc = BuildWorkerMap(searchLoc);
             if (workerLoc.Keys.Contains(typeID))
             {
+                /// ### HostWrapper workerShell = new HostWrapper();
                 /// Create a process with the proper string as startup parameters:
                 /// WorkWrapper.exe is the location for the wrapper
                 /// exch details
@@ -93,14 +131,14 @@ namespace ComputeFarm
                 UpdateRunTime();
                 if (currentRunTime > executionTimeout)
                 {
-                    workerProcess.Kill();
+                    workerProcess = null;   // ### workerProcess.Kill();
                 }
             }
         }
         public bool Start(ComputeRequest cr, WorkerCompleteHandler handler)
         {
-            workerProcess.WorkerCompleteEvent += handler;
-            return workerProcess.Start(cr);
+            workerProcess.Start();
+            return true;    // ###
         }
     }
 

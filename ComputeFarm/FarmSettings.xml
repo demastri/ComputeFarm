@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings>
+  <Farm name="local" host="localhost" port="5672" uid="guest" pwd="guest" exch="ComputeFarm" clientID="" />
+  <Farm name="server" host="demastri-vpn-01.asuscomm.com" port="5672" uid="jpd-rmq" pwd="omg;inanrp" exch="ComputeFarm" clientID="" />
+</Settings>

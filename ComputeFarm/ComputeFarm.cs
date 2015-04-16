@@ -26,6 +26,8 @@ namespace ComputeFarm
     {
         EventLog auditLog;
         List<ComputeWorker> workers;
+        FarmSettings settings;
+
 
         string ControlBaseName = "__ControlBase__";
         QueueingModel controlQueue;
@@ -33,8 +35,15 @@ namespace ComputeFarm
         //===================================
         // service control methods
 
+        public ComputeFarm(FarmSettings fs, EventLog audit)
+        {
+            settings = fs;
+            workers = new List<ComputeWorker>();
+            auditLog = audit;
+        }
         public ComputeFarm(EventLog audit)
         {
+            settings = new FarmSettings();
             workers = new List<ComputeWorker>();
             auditLog = audit;
         }
@@ -45,6 +54,7 @@ namespace ComputeFarm
         }
         public void Shutdown()
         {
+            controlQueue.CloseConnections();
             CleanupWorkers(workers);
         }
         public void CheckControlRequests()
@@ -61,7 +71,9 @@ namespace ComputeFarm
             List<string> routes = new List<string>();
             routes.Add("*.farmRequest.proxy");
             // the queueingmodel class binds an exchange and queue for straightforward applications where only one channel is needed
-            controlQueue = new QueueingModel("ComputeFarm", "topic", ControlBaseName, routes, "localhost", "guest", "guest", 5672);
+            controlQueue = new QueueingModel(
+                settings.Exch, "topic", ControlBaseName, routes, 
+                settings.Host, settings.Uid, settings.Pwd, settings.Port );
             controlQueue.SetListenerCallback(HandlePosts);
             if (auditLog != null)
                 auditLog.WriteEntry("Queue Initialized");

@@ -151,6 +151,7 @@
             this.Controls.Add(this.RequestFarmButton);
             this.Name = "RequestForm";
             this.Text = "Form1";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.RequestForm_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 
