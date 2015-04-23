@@ -128,7 +128,7 @@ namespace ComputeFarm
             while (list.Count > 0)
             {
                 ComputeWorker cw = list[0];
-                if (cw.status == WorkerStatus.Running)
+                if (cw.status == ComputeFarmWorkerProxy.WorkerStatus.Running)
                     cw.Kill();
                 cw.Shutdown();
                 list.Remove(cw);

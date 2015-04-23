@@ -47,7 +47,7 @@
     <ProjectReference Include="..\ComputeFarmWorkerProxy\ComputeFarmWorkerProxy.csproj">
       <Project>{258d6910-898a-47ad-8bc6-2a5af2599a2a}</Project>
       <Name>ComputeFarmWorkerProxy</Name>
-      <Private>False</Private>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

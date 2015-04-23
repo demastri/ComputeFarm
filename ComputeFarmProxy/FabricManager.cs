@@ -133,11 +133,15 @@ namespace ComputeFarmProxy
             string thisRouting = paramList[(int)StringifiedParameters.RouteKeyOffset];
             int thisPort = Convert.ToInt32(paramList[(int)StringifiedParameters.PortOffset]);
 
-            baseExchange = new Exchange(thisExch, "direct", thisHost, thisUid, thisPwd, thisPort);
+            ConnectionDetail conn = new ConnectionDetail(thisHost, thisPort, thisExch, "direct", "", thisRouting, thisUid, thisPwd );
 
-            requestQueue = new Queue(baseExchange, thisBaseName + ".Request", thisRouting);
-            resultsQueue = new Queue(baseExchange, thisBaseName + ".Results", thisRouting);
-            updatesQueue = new Queue(baseExchange, thisBaseName + ".Updates", thisRouting);
+            baseExchange = new Exchange(conn);
+            conn.queueName = thisBaseName + ".Request";
+            requestQueue = new Queue(baseExchange, conn);
+            conn.queueName = thisBaseName + ".Results";
+            resultsQueue = new Queue(baseExchange, conn);
+            conn.queueName = thisBaseName + ".Updates";
+            updatesQueue = new Queue(baseExchange, conn);
         }
         public void SetupHandlers(RequestUpdateHandler updateHandler, RequestCompleteHandler completeHandler)
         {

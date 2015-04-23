@@ -36,5 +36,14 @@ namespace ComputeFarmWorkerProxy
 
         WorkerStatus GetStatus();
         string GetWorkResult();
+
+        //void SetWorkRequest(ComputeRequest wr);
+        //ComputeRequest GetWorkRequest();
+        //void CheckProgress();
+        //bool Start(ComputeRequest wr);
+
+        //void Reset();
+
+    
     }
 }

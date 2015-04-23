@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 
 using ProcessWrappers;
+using ComputeFarmWorkerProxy;
 
 namespace ComputeFarm
 {
@@ -38,7 +39,9 @@ namespace ComputeFarm
         /// </summary>
         public int thisID;
 
-        static string searchLoc = "./Workers"; // sdir of the executable??
+        static List<string> searchLoc = new List<string>() {
+            "./Workers", "C:\\Projects\\JPD\\BBRepos\\ComputeFarm\\TestWorker\\bin\\Debug"
+        }; // sdir of the executable??
 
         string resultQueue;
         string routeKey;
@@ -61,7 +64,7 @@ namespace ComputeFarm
         {
             /// ### there may be many ways to manage this, but the first one out of the box is:
             ///     an IWorker component in a dll that we can wrap in a WorkWrapper...
-           
+
             /// I think it's easier from a workflow perspective to find the appropriate dlls for this typeid first
             /// then pass them to the workwrapper for instantiation, rather than start a process and hope it will 
             /// be able to find it.  You still have to get a positive ack that it's running, but if you don't you
@@ -73,12 +76,15 @@ namespace ComputeFarm
             /// the hostwrapper can be pretty ignorant of that...actually, the hostwrapper could be embedded in the 
             /// actual farm calling client, if a same-machine solution was acceptable.  Having something else manage the 
             /// clientwrappers (workers) allows it to be distributed...
-            
+
             /// the real question will be, do I need a computeworker, or is it just a hostwrapper?
 
             Dictionary<string, string> workerLoc = BuildWorkerMap(searchLoc);
             if (workerLoc.Keys.Contains(typeID))
             {
+                //HostWrapper workerShell = new HostWrapper( );
+
+
                 /// ### HostWrapper workerShell = new HostWrapper();
                 /// Create a process with the proper string as startup parameters:
                 /// WorkWrapper.exe is the location for the wrapper
@@ -86,30 +92,44 @@ namespace ComputeFarm
                 /// queue details
                 /// typeid library details
                 /// typeid details
-                
+
                 /// start the process
                 /// look for an ack that it started ok
             }
             return null;
         }
-            
-        static Dictionary<string, string> BuildWorkerMap(string dirToSearch)
+
+        static Dictionary<string, string> BuildWorkerMap(List<string> dirToSearch)
         {
             // find the typeID
-            Dictionary<string, string> outDict = new Dictionary<string,string>();
-
-            System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(dirToSearch);
-            System.IO.FileInfo[] fis = di.GetFiles("*.dll");
-            foreach (System.IO.FileInfo fi in fis)
+            Dictionary<string, string> outDict = new Dictionary<string, string>();
+            foreach (string dir in dirToSearch)
             {
                 try
                 {
-                    Assembly myTempAssy = System.Reflection.Assembly.ReflectionOnlyLoadFrom(fi.FullName);
-                    foreach( Type t in myTempAssy.GetTypes() )
-                        outDict.Add( t.FullName, fi.FullName );
+                    System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(dir);
+                    System.IO.FileInfo[] fis = di.GetFiles("*.dll");
+                    foreach (System.IO.FileInfo fi in fis)
+                    {
+                        try
+                        {
+                            Assembly myTempAssy = System.Reflection.Assembly.LoadFrom(fi.FullName);
+                            foreach (Type t in myTempAssy.GetTypes())
+                                if (t.GetInterface(typeof(IWorker).FullName) != null )
+                                    outDict.Add(t.FullName, fi.FullName);
+                        }
+                        catch (System.Reflection.ReflectionTypeLoadException e)
+                        {
+                            foreach( Exception ex1 in e.LoaderExceptions )
+                            {
+                                Console.WriteLine("--LoaderExceptions: " + ex1.Message);
+                            }
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine(e.Message);
                 }
             }
             return outDict;
@@ -135,31 +155,10 @@ namespace ComputeFarm
                 }
             }
         }
-        public bool Start(ComputeRequest cr, WorkerCompleteHandler handler)
+        public bool Start(ComputeRequest cr, ComputeFarmWorkerProxy.WorkerCompleteHandler handler)
         {
             workerProcess.Start();
             return true;    // ###
         }
-    }
-
-    public enum WorkerStatus { Init, Idle, Running, Completed, Timeout, Error };
-    public delegate void WorkerUpdateHandler(ComputeResult result);
-    public delegate void WorkerCompleteHandler(ComputeResult result);
-    public interface IWorker
-    {
-        event WorkerUpdateHandler WorkerUpdateEvent;
-        event WorkerCompleteHandler WorkerCompleteEvent;
-
-        WorkerStatus GetStatus();
-        void SetWorkRequest(ComputeRequest wr);
-        ComputeRequest GetWorkRequest();
-        ComputeResult GetWorkResult();
-        void CheckProgress();
-        bool Start(ComputeRequest wr);
-        bool Kill();
-        void Shutdown();
-
-        void Init();
-        void Reset();
     }
 }

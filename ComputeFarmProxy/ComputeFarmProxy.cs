@@ -59,17 +59,13 @@ namespace ComputeFarmProxy
         /// farm posts to *.farmResponse/workerCommand.* messages
         /// farm listens to *.*.* messages
 
-        string host;
-        int port;
-        string exchange;
-        string uid;
-        string pwd;
         string thisClientID;
         ComputeFarmStatus currentConfig;
 
         string ControlBaseName = "__ControlBaseProxy__";
 
         Exchange baseExchange;
+        ConnectionDetail baseConn;
         Queue controlQueue;
         List<Queue> workerQueues;
         System.Timers.Timer contextTimer;
@@ -97,7 +93,7 @@ namespace ComputeFarmProxy
             ComputeFarmProxy outFarm = new ComputeFarmProxy(thisPort, thisHost, refExch, refuid, refpwd, clientID);
             outFarm.SetupExchange();
             outFarm.SetupControlQueue();
-                
+
             return outFarm;
         }
 
@@ -111,25 +107,24 @@ namespace ComputeFarmProxy
         {
             openRequests = new List<ComputeRequest>();
             workerQueues = new List<Queue>();
+
+            baseConn = new ConnectionDetail(thisHost, thisPort, refExch, "topic", "", "", refuid, refpwd);
+
             thisClientID = clientID;
-            port = thisPort;
-            host = thisHost;
-            exchange = refExch;
-            uid = refuid;
-            pwd = refpwd;
         }
 
         //===============
         private void SetupExchange()
         {
-            baseExchange = new Exchange(exchange, "topic", host, uid, pwd, port);
-
+            baseExchange = new Exchange(baseConn);
         }
         internal void SetupControlQueue()
         {
             try
             {
-                controlQueue = new Queue(baseExchange, ControlBaseName, thisClientID + ".farmResponse.farm");
+                ConnectionDetail ctrlConn = baseConn;
+                ctrlConn.Update(new ConnectionDetail("", -1, "", "", ControlBaseName, thisClientID + ".farmResponse.farm", "", ""));
+                controlQueue = new Queue(baseExchange, ctrlConn);
                 controlQueue.SetListenerCallback(CommandCallback);
                 ComputeFarm.ComputeRequest req = new ComputeFarm.ComputeRequest("Init");
                 openRequests.Add(req);
@@ -176,7 +171,11 @@ namespace ComputeFarmProxy
             List<string> routes = new List<string>();
             routes.Add(thisClientID + ".workUpdate." + typeID);
             routes.Add(thisClientID + ".workComplete." + typeID);
-            Queue newWorkerQueue = new Queue(baseExchange, thisClientID + "." + typeID, routes);
+
+            ConnectionDetail workerConn = baseConn;
+            workerConn.Update(new ConnectionDetail("", -1, "", "", thisClientID + "." + typeID, routes, "", ""));
+
+            Queue newWorkerQueue = new Queue(baseExchange, workerConn);
 
             workerQueues.Add(newWorkerQueue);
             return workerQueues.IndexOf(newWorkerQueue);
@@ -264,7 +263,7 @@ namespace ComputeFarmProxy
         }
         public void RequestWork(WorkerHandle handle, string request)
         {
-            handle.worker.PostMessage(request, thisClientID+".workRequest."+handle.typeID);
+            handle.worker.PostMessage(request, thisClientID + ".workRequest." + handle.typeID);
         }
         public void Shutdown()
         {
