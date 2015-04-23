@@ -54,9 +54,9 @@ namespace TestRequest
                 // this should ask a running service for 4 engines of TestWorker.Worker
                 // it should get an acknowledgement, and dialog up the results
 
-                if( fs == null )
+                if (fs == null)
                     fs = FarmSettings.SettingsFactory("local");
-               fs.ClientID = thisClientID = Guid.NewGuid().ToString();
+                fs.ClientID = thisClientID = Guid.NewGuid().ToString();
                 myFarmProxy = ComputeFarmProxy.ComputeFarmProxy.ConnectToFarm(fs);
                 if (myFarmProxy != null && myFarmProxy.IsOpen)
                     MessageBox.Show("Farm Connected OK");
@@ -79,7 +79,7 @@ namespace TestRequest
             printSortWorker = myFarmProxy.ConnectWorkerFabric("TestWorker.PrintSort", 4, UpdateTask1Handler, ResultTask1Handler);
             randomTaskWorker = myFarmProxy.ConnectWorkerFabric("TestWorker.RandomTask", 4, UpdateTask2Handler, ResultTask2Handler);
 
-            if (printSortWorker != null && randomTaskWorker != null )
+            if (printSortWorker != null && randomTaskWorker != null)
                 MessageBox.Show("Fabric Connected OK");
             else
             {

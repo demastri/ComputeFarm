@@ -122,8 +122,7 @@ namespace ComputeFarmProxy
         {
             try
             {
-                ConnectionDetail ctrlConn = baseConn;
-                ctrlConn.Update(new ConnectionDetail("", -1, "", "", ControlBaseName, thisClientID + ".farmResponse.farm", "", ""));
+                ConnectionDetail ctrlConn = baseConn.Update(new ConnectionDetail("", -1, "", "", ControlBaseName, thisClientID + ".farmResponse.farm", "", ""));
                 controlQueue = new Queue(baseExchange, ctrlConn);
                 controlQueue.SetListenerCallback(CommandCallback);
                 ComputeFarm.ComputeRequest req = new ComputeFarm.ComputeRequest("Init");
