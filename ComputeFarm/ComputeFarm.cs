@@ -27,6 +27,7 @@ namespace ComputeFarm
         EventLog auditLog;
         List<ComputeWorker> workers;
         FarmSettings settings;
+        ConnectionDetail qSettings;
 
 
         string ControlBaseName = "__ControlBase__";
@@ -115,7 +116,7 @@ namespace ComputeFarm
         private bool CreateWorkers(string typeID, int count) {
             for (int i = 0; i < count; i++)
             {
-                ComputeWorker thisWorker = ComputeWorker.WorkerFactory(typeID);
+                ComputeWorker thisWorker = ComputeWorker.WorkerFactory(typeID, qSettings);
                 if (thisWorker == null)
                     return false;
                 workers.Add(thisWorker);

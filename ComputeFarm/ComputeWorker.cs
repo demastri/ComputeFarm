@@ -7,6 +7,7 @@ using System.Reflection;
 
 using ProcessWrappers;
 using ComputeFarmWorkerProxy;
+using QueueCommon;
 
 namespace ComputeFarm
 {
@@ -39,6 +40,7 @@ namespace ComputeFarm
         /// </summary>
         public int thisID;
 
+        static string workWrapperLocation = "C:\\Projects\\JPD\\BBRepos\\ComputeFarm\\WorkerWrapper\\bin\\Debug";
         static List<string> searchLoc = new List<string>() {
             "./Workers", "C:\\Projects\\JPD\\BBRepos\\ComputeFarm\\TestWorker\\bin\\Debug"
         }; // sdir of the executable??
@@ -60,7 +62,7 @@ namespace ComputeFarm
         public void Kill() { if (workerProcess != null) /*###*/workerProcess = null; }
         public void Shutdown() { if (workerProcess != null) /*###*/workerProcess = null; }
 
-        public static ComputeWorker WorkerFactory(string typeID)
+        public static ComputeWorker WorkerFactory(string typeID, ConnectionDetail refConn)
         {
             /// ### there may be many ways to manage this, but the first one out of the box is:
             ///     an IWorker component in a dll that we can wrap in a WorkWrapper...
@@ -82,8 +84,10 @@ namespace ComputeFarm
             Dictionary<string, string> workerLoc = BuildWorkerMap(searchLoc);
             if (workerLoc.Keys.Contains(typeID))
             {
-                //HostWrapper workerShell = new HostWrapper( );
+                string paramString = BuildWorkerCommandString();
+                HostWrapper workerShell = new HostWrapper(workWrapperLocation, HostWrapper.IOType.QUEUES, refConn);
 
+                workerShell.Start(paramString);
 
                 /// ### HostWrapper workerShell = new HostWrapper();
                 /// Create a process with the proper string as startup parameters:
@@ -95,8 +99,14 @@ namespace ComputeFarm
 
                 /// start the process
                 /// look for an ack that it started ok
+                /// 
+                return workerShell;
             }
             return null;
+        }
+        public static string BuildWorkerCommandString()
+        {
+            return "someLoc|someTypeID|someconnSettings";
         }
 
         static Dictionary<string, string> BuildWorkerMap(List<string> dirToSearch)
