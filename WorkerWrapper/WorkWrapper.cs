@@ -7,11 +7,70 @@ using System.Threading.Tasks;
 using QueueCommon;
 using ComputeFarmProxy;
 using ComputeFarmWorkerProxy;
+using ProcessWrappers;
 
 namespace WorkerWrapper
 {
     class WorkWrapper
     {
+        /// what does a workwrapper for the compute farm have to do?
+        ///     connect / listen to the appropriate queue
+        ///     listen for work/update requests
+        ///     post update / completion status
+        ///     listen for shutdown requests
+        static void Main(string[] args)
+        {
+            ClientWrapper myClient = new ClientWrapper(args);
+
+            myClient.Start();
+            if (myClient.useQueueIO)
+                myClient.UpdatePostRoute("workRequest", "workComplete");
+
+            string temp;    // Display the read text to the console 
+            bool done = false;
+            // Wait for 'sync message' from the server. 
+            do
+            {
+                myClient.ClientMessage("[CLIENT] Wait for sync...");
+                temp = myClient.ClientReadLine();
+            }
+            while (!temp.StartsWith("SYNC"));
+            myClient.ClientMessage("[CLIENT] Received sync...");
+
+            // Read the server data and echo to the console. 
+            Task<string> readTask = myClient.ClientReadLineAsync();
+            do
+            {
+                if (readTask.IsCompleted)
+                {
+                    temp = readTask.Result;
+                    myClient.ClientMessage("[CLIENT] Echo: " + temp);
+                    if (temp.StartsWith("QUIT"))
+                        done = true;
+                    else
+                        readTask = myClient.ClientReadLineAsync();
+                }
+                else
+                {
+                    System.Threading.Thread.Sleep(750);
+                    myClient.ClientMessage("[CLIENT] Wait...");
+                }
+            }
+            while (!done);
+
+            myClient.ClientMessage("[CLIENT] Press Enter to Quit...");
+            temp = myClient.ClientReadLine();
+
+            myClient.ClientMessage("[CLIENT] quitting client process...");
+            myClient.ClientMessage("QUIT"); // mark to the server that we're done...
+
+            myClient.Cleanup();
+        }
+    }
+    class WorkWrapperStamdalone
+    {
+        // Queue based client wrapper??
+
         static System.Timers.Timer contextTimer;
 
         static IWorker myWorker = null;
@@ -22,7 +81,7 @@ namespace WorkerWrapper
 
         static int sleepIncrement = 50;
 
-        static int Main(string[] args)
+        static int OldMain(string[] args)
         {
             // the job of this process is to:
             //  instantiate a worker

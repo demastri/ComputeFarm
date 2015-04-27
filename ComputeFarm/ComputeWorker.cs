@@ -81,15 +81,19 @@ namespace ComputeFarm
 
             /// the real question will be, do I need a computeworker, or is it just a hostwrapper?
 
+
+
             Dictionary<string, string> workerLoc = BuildWorkerMap(searchLoc);
             if (workerLoc.Keys.Contains(typeID))
             {
+                ComputeWorker thisworker = new ComputeWorker();
                 string paramString = BuildWorkerCommandString();
                 HostWrapper workerShell = new HostWrapper(workWrapperLocation, HostWrapper.IOType.QUEUES, refConn);
 
+                thisworker.workerProcess = workerShell;
+
                 workerShell.Start(paramString);
 
-                /// ### HostWrapper workerShell = new HostWrapper();
                 /// Create a process with the proper string as startup parameters:
                 /// WorkWrapper.exe is the location for the wrapper
                 /// exch details
@@ -100,7 +104,7 @@ namespace ComputeFarm
                 /// start the process
                 /// look for an ack that it started ok
                 /// 
-                return workerShell;
+                return thisworker;
             }
             return null;
         }

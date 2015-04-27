@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ProcessWrappers, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Chess\PipesCommsExamples\ProcessWrappers\bin\Debug\ProcessWrappers.dll</HintPath>
+    </Reference>
     <Reference Include="QueueCommon, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\QueueMgt\QueueCommon\bin\Debug\QueueCommon.dll</HintPath>
