@@ -49,7 +49,7 @@ namespace ComputeFarm
         string routeKey;
         public string requestType;
 
-        HostWrapper workerProcess;
+        ProcessWrapper workerProcess;
 
         public DateTime creationTme;
         public DateTime executionStartTime;
@@ -81,18 +81,17 @@ namespace ComputeFarm
 
             /// the real question will be, do I need a computeworker, or is it just a hostwrapper?
 
-
-
             Dictionary<string, string> workerLoc = BuildWorkerMap(searchLoc);
             if (workerLoc.Keys.Contains(typeID))
             {
                 ComputeWorker thisworker = new ComputeWorker();
                 string paramString = BuildWorkerCommandString();
-                HostWrapper workerShell = new HostWrapper(workWrapperLocation, HostWrapper.IOType.QUEUES, refConn);
+                ProcessWrapper workerShell = new ProcessWrapper();
+                    
+                //workerShell.Init(workWrapperLocation, ProcessWrappers.IOModels.IOType.QUEUES, refConn);
 
                 thisworker.workerProcess = workerShell;
 
-                workerShell.Start(paramString);
 
                 /// Create a process with the proper string as startup parameters:
                 /// WorkWrapper.exe is the location for the wrapper
@@ -171,7 +170,7 @@ namespace ComputeFarm
         }
         public bool Start(ComputeRequest cr, ComputeFarmWorkerProxy.WorkerCompleteHandler handler)
         {
-            workerProcess.Start();
+            // workerProcess.Start();  // ###
             return true;    // ###
         }
     }

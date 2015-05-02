@@ -52,21 +52,21 @@ namespace ComputeFarmProxy
             return !(lhs == rhs);
         }
 
-        public FabricManager(FarmSettings fs)
+        public FabricManager(ConnectionDetail fs)
         {
             Init(fs);
         }
         public FabricManager()
         {
-            Init(new FarmSettings() );
+            Init(new ConnectionDetail());
         }
-        private void Init(FarmSettings fs)
+        private void Init(ConnectionDetail fs)
         {
-            port = fs.Port;
-            host = fs.Host;
-            exchange = fs.Exch;
-            uid = fs.Uid;
-            pwd = fs.Pwd;
+            port = fs.port;
+            host = fs.host;
+            exchange = fs.exchName;
+            uid = fs.user;
+            pwd = fs.pass;
 
             myWorkerID = -1;
         }
@@ -133,7 +133,7 @@ namespace ComputeFarmProxy
             string thisRouting = paramList[(int)StringifiedParameters.RouteKeyOffset];
             int thisPort = Convert.ToInt32(paramList[(int)StringifiedParameters.PortOffset]);
 
-            ConnectionDetail conn = new ConnectionDetail(thisHost, thisPort, thisExch, "direct", "", thisRouting, thisUid, thisPwd );
+            ConnectionDetail conn = new ConnectionDetail("", thisHost, thisPort, thisExch, "direct", "", thisRouting, thisUid, thisPwd, "" );
 
             baseExchange = new Exchange(conn);
             conn.queueName = thisBaseName + ".Request";

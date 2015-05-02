@@ -80,9 +80,9 @@ namespace ComputeFarmProxy
 
         List<ComputeRequest> openRequests;
 
-        static public ComputeFarmProxy ConnectToFarm(FarmSettings fs)
+        static public ComputeFarmProxy ConnectToFarm(ConnectionDetail fs)
         {
-            return ConnectToFarm(fs.Port, fs.Host, fs.Exch, fs.Uid, fs.Pwd);
+            return ConnectToFarm(fs.port, fs.host, fs.exchName, fs.user, fs.pass);
         }
         static public ComputeFarmProxy ConnectToFarm(int thisPort, string thisHost, string refExch, string refuid, string refpwd)
         {
@@ -108,7 +108,7 @@ namespace ComputeFarmProxy
             openRequests = new List<ComputeRequest>();
             workerQueues = new List<Queue>();
 
-            baseConn = new ConnectionDetail(thisHost, thisPort, refExch, "topic", "", "", refuid, refpwd);
+            baseConn = new ConnectionDetail("FarmConn", thisHost, thisPort, refExch, "topic", "", "", refuid, refpwd, clientID);
 
             thisClientID = clientID;
         }
@@ -122,7 +122,7 @@ namespace ComputeFarmProxy
         {
             try
             {
-                ConnectionDetail ctrlConn = baseConn.Update(new ConnectionDetail("", -1, "", "", ControlBaseName, thisClientID + ".farmResponse.farm", "", ""));
+                ConnectionDetail ctrlConn = baseConn.Update(new ConnectionDetail("", "", -1, "", "", ControlBaseName, thisClientID + ".farmResponse.farm", "", "", ""));
                 controlQueue = new Queue(baseExchange, ctrlConn);
                 controlQueue.SetListenerCallback(CommandCallback);
                 ComputeFarm.ComputeRequest req = new ComputeFarm.ComputeRequest("Init");
@@ -172,7 +172,7 @@ namespace ComputeFarmProxy
             routes.Add(thisClientID + ".workComplete." + typeID);
 
             ConnectionDetail workerConn = baseConn;
-            workerConn.Update(new ConnectionDetail("", -1, "", "", thisClientID + "." + typeID, routes, "", ""));
+            workerConn.Update(new ConnectionDetail("", "", -1, "", "", thisClientID + "." + typeID, routes, "", "", ""));
 
             Queue newWorkerQueue = new Queue(baseExchange, workerConn);
 

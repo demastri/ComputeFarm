@@ -26,17 +26,15 @@ namespace ComputeFarm
     {
         EventLog auditLog;
         List<ComputeWorker> workers;
-        FarmSettings settings;
-        ConnectionDetail qSettings;
-
-
+        ConnectionDetail settings;
+        
         string ControlBaseName = "__ControlBase__";
         QueueingModel controlQueue;
 
         //===================================
         // service control methods
 
-        public ComputeFarm(FarmSettings fs, EventLog audit)
+        public ComputeFarm(ConnectionDetail fs, EventLog audit)
         {
             settings = fs;
             workers = new List<ComputeWorker>();
@@ -44,7 +42,7 @@ namespace ComputeFarm
         }
         public ComputeFarm(EventLog audit)
         {
-            settings = new FarmSettings();
+            settings = new ConnectionDetail();
             workers = new List<ComputeWorker>();
             auditLog = audit;
         }
@@ -73,8 +71,8 @@ namespace ComputeFarm
             routes.Add("*.farmRequest.proxy");
             // the queueingmodel class binds an exchange and queue for straightforward applications where only one channel is needed
             controlQueue = new QueueingModel(
-                settings.Exch, "topic", ControlBaseName, routes, 
-                settings.Host, settings.Uid, settings.Pwd, settings.Port );
+                settings.exchName, "topic", ControlBaseName, routes, 
+                settings.host, settings.user, settings.pass, settings.port );
             controlQueue.SetListenerCallback(HandlePosts);
             if (auditLog != null)
                 auditLog.WriteEntry("Queue Initialized");
@@ -116,7 +114,7 @@ namespace ComputeFarm
         private bool CreateWorkers(string typeID, int count) {
             for (int i = 0; i < count; i++)
             {
-                ComputeWorker thisWorker = ComputeWorker.WorkerFactory(typeID, qSettings);
+                ComputeWorker thisWorker = ComputeWorker.WorkerFactory(typeID, settings);
                 if (thisWorker == null)
                     return false;
                 workers.Add(thisWorker);

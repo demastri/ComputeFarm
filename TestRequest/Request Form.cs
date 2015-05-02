@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using QueueCommon;
 using ComputeFarm;
 using ComputeFarmProxy;
 
@@ -15,7 +16,7 @@ namespace TestRequest
 {
     public partial class RequestForm : Form
     {
-        FarmSettings fs = null;
+        ConnectionDetail fs = null;
 
         ComputeFarm.ComputeFarm actFarm;
 
@@ -55,8 +56,8 @@ namespace TestRequest
                 // it should get an acknowledgement, and dialog up the results
 
                 if (fs == null)
-                    fs = FarmSettings.SettingsFactory("local");
-                fs.ClientID = thisClientID = Guid.NewGuid().ToString();
+                    fs = ConnectionDetail.ConnectionDetailFactory()["local"];
+                fs.clientID = thisClientID = Guid.NewGuid().ToString();
                 myFarmProxy = ComputeFarmProxy.ComputeFarmProxy.ConnectToFarm(fs);
                 if (myFarmProxy != null && myFarmProxy.IsOpen)
                     MessageBox.Show("Farm Connected OK");
@@ -164,7 +165,7 @@ namespace TestRequest
             try
             {
                 if (fs == null)
-                    fs = FarmSettings.SettingsFactory()["local"];
+                    fs = ConnectionDetail.ConnectionDetailFactory()["local"];
 
                 actFarm = new ComputeFarm.ComputeFarm(fs, null);
                 actFarm.Init();
